@@ -1,0 +1,27 @@
+definitions:
+  dto.ImgVerifyCodeRespDto:
+    properties:
+      img:
+        type: string
+      uuid:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/front/resource/img_verify_code:
+    get:
+      consumes:
+      - application/json
+      description: 返回图片验证码的 Base64 编码和对应的验证码内容
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ImgVerifyCodeRespDto'
+      summary: 获取图片验证码接口
+      tags:
+      - Resource
+swagger: "2.0"
