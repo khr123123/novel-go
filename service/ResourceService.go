@@ -19,7 +19,7 @@ func NewResourceService() *ResourceService {
 func (s *ResourceService) GetImgVerifyCode() (*req.ImgVerifyCodeRespDto, error) {
 	// 这里使用 captcha 包生成验证码
 	captcha := base64Captcha.NewCaptcha(
-		base64Captcha.NewDriverDigit(80, 240, 5, 0.7, 80),
+		base64Captcha.NewDriverDigit(45, 120, 5, 0.7, 80),
 		base64Captcha.DefaultMemStore,
 	)
 	id, b64s, answer, _ := captcha.Generate()

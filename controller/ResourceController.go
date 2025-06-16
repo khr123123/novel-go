@@ -40,7 +40,7 @@ func (rc *ResourceController) GetImgVerifyCode(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "生成验证码失败"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "成功", "data": resp})
+	c.JSON(http.StatusOK, gin.H{"code": "00000", "msg": "成功", "data": resp})
 }
 
 // UploadImage 图片上传接口 Todo
