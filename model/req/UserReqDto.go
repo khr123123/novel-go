@@ -1,5 +1,10 @@
 package req
 
+type UserLoginReqDto struct {
+	Username string `json:"username" validate:"required,username"`
+	Password string `json:"password" validate:"required,min=6"`
+}
+
 type UserRegisterReqDto struct {
 	Username  string `json:"username" binding:"required,len=11,numeric"` // 手机号，必须11位数字
 	Password  string `json:"password" binding:"required"`                // 密码，必填

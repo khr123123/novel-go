@@ -1,84 +1,144 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"novel-go/config"
 	"novel-go/constants"
 	"novel-go/model/pojo"
 	"novel-go/model/req"
 	"novel-go/model/resp"
+	"novel-go/utils"
 	"time"
 )
 
-type UserService struct {
+// UserService 用户服务接口
+type UserService interface {
+	// Register 用户注册
+	// @Summary 用户注册
+	// @Description 根据注册信息注册新用户
+	// @Tags 用户模块
+	// @Accept json
+	// @Produce json
+	// @Param data body req.UserRegisterReqDto true "注册信息"
+	// @Success 200 {object} resp.UserRegisterRespDto
+	// @Failure 400 {string} string "错误信息"
+	// @Router /user/register [post]
+	Register(req *req.UserRegisterReqDto) (*resp.UserRegisterRespDto, error)
+
+	// Login 用户登录
+	// @Summary 用户登录
+	// @Description 根据用户名密码登录
+	// @Tags 用户模块
+	// @Accept json
+	// @Produce json
+	// @Param data body req.UserLoginReqDto true "登录信息"
+	// @Success 200 {object} resp.UserLoginRespDto
+	// @Failure 400 {string} string "错误信息"
+	// @Router /user/login [post]
+	Login(r *req.UserLoginReqDto) (*resp.UserLoginRespDto, error)
 }
 
-func NewUserService() *UserService {
-	return &UserService{}
+// UserServiceImpl 用户服务接口实现
+type UserServiceImpl struct {
 }
 
-func (s *UserService) Register(req *req.UserRegisterReqDto) (*resp.UserRegisterRespDto, error) {
-	// 1. 校验参数
-	if req.Username == "" || req.Password == "" || req.VelCode == "" || req.SessionId == "" {
-		return nil, fmt.Errorf("缺少必要的注册参数")
-	}
+// NewUserServiceImpl 构造函数
+func NewUserServiceImpl() UserService {
+	return &UserServiceImpl{}
+}
 
-	// 2. 从 Redis 读取验证码
+// Register 用户注册实现
+func (s *UserServiceImpl) Register(req *req.UserRegisterReqDto) (*resp.UserRegisterRespDto, error) {
 	redisKey := constants.RedisKeyCaptcha + req.SessionId
+
+	// 1. 校验验证码
 	dbCode, err := config.RedisClient.Get(config.Ctx, redisKey).Result()
 	if err != nil {
-		return nil, fmt.Errorf("验证码不存在或已过期")
+		return nil, errors.New("验证码不存在或已过期")
 	}
-
-	// 3. 校验验证码是否匹配
 	if dbCode != req.VelCode {
-		return nil, fmt.Errorf("验证码错误")
+		return nil, errors.New("验证码错误")
 	}
 
-	// 4. 检查用户名是否已存在
+	// 校验成功后再删除 Redis 验证码，避免误删
+	defer config.RedisClient.Del(config.Ctx, redisKey)
+
+	// 2. 检查用户名是否已存在
 	var count int64
-	err = config.DB.Model(&pojo.UserInfo{}).Where("username = ?", req.Username).Count(&count).Error
-	if err != nil {
-		return nil, fmt.Errorf("数据库查询错误: %v", err)
+	if err := config.DB.Model(&pojo.UserInfo{}).
+		Where("username = ?", req.Username).
+		Count(&count).Error; err != nil {
+		return nil, fmt.Errorf("数据库查询失败: %w", err)
 	}
 	if count > 0 {
-		return nil, fmt.Errorf("用户名已存在")
+		return nil, errors.New("用户名已存在")
 	}
 
-	// 5. 密码加密
+	// 3. 加密密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, fmt.Errorf("密码加密失败: %v", err)
+		return nil, fmt.Errorf("密码加密失败: %w", err)
 	}
 
-	// 6. 创建用户实体
+	// 4. 创建用户
 	user := pojo.UserInfo{
-		Username: req.Username,
-		Password: string(hashedPassword),
-		// 可根据需求初始化默认值，比如昵称、状态等
-		NickName:   req.Username, // 默认昵称为用户名，也可后续修改
-		Status:     0,            // 默认正常状态
+		Username:   req.Username,
+		Password:   string(hashedPassword),
+		NickName:   req.Username,
+		Status:     0,
 		CreateTime: time.Now(),
 		UpdateTime: time.Now(),
 	}
 
-	// 7. 入库
 	if err := config.DB.Create(&user).Error; err != nil {
-		return nil, fmt.Errorf("用户创建失败: %v", err)
+		return nil, fmt.Errorf("用户创建失败: %w", err)
 	}
 
-	// 8. 构造返回数据（示例，这里生成一个简单的 token，生产环境请替换为JWT等）
-	//token, err := s.generateToken(user.ID, user.Username)
-	//if err != nil {
-	//	return nil, fmt.Errorf("token生成失败: %v", err)
-	//}
-
+	// 5. 构造返回信息
 	respDto := &resp.UserRegisterRespDto{
 		UID:      int64(user.ID),
-		Token:    "",
 		NickName: user.NickName,
-		Avatar:   user.UserPhoto, // 头像可为空，后续用户可上传
+		Avatar:   user.UserPhoto,
 	}
+
+	return respDto, nil
+}
+
+// Login 用户登录实现
+func (s *UserServiceImpl) Login(r *req.UserLoginReqDto) (*resp.UserLoginRespDto, error) {
+	username := r.Username
+	password := r.Password
+
+	// 1. 查询用户信息
+	var user pojo.UserInfo
+	if err := config.DB.Where("username = ?", username).Limit(1).Find(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("用户不存在")
+		}
+		return nil, fmt.Errorf("数据库查询失败: %w", err)
+	}
+
+	// 2. 校验密码（bcrypt）
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return nil, errors.New("密码错误")
+	}
+
+	// 3. 生成 JWT Token
+	token, err := utils.GenerateToken(user.ID, constants.JwtSecret)
+	if err != nil {
+		return nil, fmt.Errorf("Token 生成失败: %w", err)
+	}
+
+	// 4. 构造返回对象
+	respDto := &resp.UserLoginRespDto{
+		UID:      user.ID,
+		NickName: user.NickName,
+		Avatar:   user.UserPhoto,
+		Token:    token,
+	}
+
 	return respDto, nil
 }
