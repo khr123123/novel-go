@@ -6,7 +6,7 @@ import (
 
 // UserInfo 用户信息
 type UserInfo struct {
-	ID             uint64    `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
+	ID             int64     `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	Username       string    `gorm:"column:username;type:varchar(255);not null" json:"username"`
 	Password       string    `gorm:"column:password;type:varchar(255);not null" json:"password"`
 	Salt           string    `gorm:"column:salt;type:varchar(255)" json:"salt"`

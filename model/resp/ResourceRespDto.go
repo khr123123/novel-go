@@ -1,4 +1,4 @@
-package req
+package resp
 
 type ImgVerifyCodeRespDto struct {
 	Img  string `json:"img"`

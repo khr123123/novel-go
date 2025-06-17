@@ -2,17 +2,17 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"novel-go/common"
 	"novel-go/service"
 )
 
 // ResourceController 前台门户-资源(图片/视频/文档)模块控制器
 type ResourceController struct {
-	ResourceService *service.ResourceService
+	ResourceService service.ResourceService
 }
 
 // NewResourceController 创建资源控制器实例
-func NewResourceController(service *service.ResourceService) *ResourceController {
+func NewResourceController(service service.ResourceService) *ResourceController {
 	return &ResourceController{
 		ResourceService: service,
 	}
@@ -23,7 +23,6 @@ func (rc *ResourceController) RegisterRoutes(router *gin.RouterGroup) {
 	resourceGroup := router.Group("/resource")
 	{
 		resourceGroup.GET("/img_verify_code", rc.GetImgVerifyCode)
-		resourceGroup.POST("/image", rc.UploadImage)
 	}
 }
 
@@ -37,26 +36,8 @@ func (rc *ResourceController) RegisterRoutes(router *gin.RouterGroup) {
 func (rc *ResourceController) GetImgVerifyCode(c *gin.Context) {
 	resp, err := rc.ResourceService.GetImgVerifyCode()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "生成验证码失败"})
+		common.ErrorResponse(c, "5000", "生成验证码失败,请稍后重试..")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": "00000", "msg": "成功", "data": resp})
-}
-
-// UploadImage 图片上传接口 Todo
-func (rc *ResourceController) UploadImage(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "msg": "文件上传失败"})
-		return
-	}
-
-	resp, err := rc.ResourceService.UploadImage(file, token, c)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "msg": "上传失败"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"code": 200, "msg": "上传成功", "data": resp})
+	common.SuccessResponse(c, resp)
 }
