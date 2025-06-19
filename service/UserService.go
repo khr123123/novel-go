@@ -16,28 +16,8 @@ import (
 
 // UserService 用户服务接口
 type UserService interface {
-	// Register 用户注册
-	// @Summary 用户注册
-	// @Description 根据注册信息注册新用户
-	// @Tags 用户模块
-	// @Accept json
-	// @Produce json
-	// @Param data body req.UserRegisterReqDto true "注册信息"
-	// @Success 200 {object} resp.UserRegisterRespDto
-	// @Failure 400 {string} string "错误信息"
-	// @Router /user/register [post]
 	Register(req *req.UserRegisterReqDto) (*resp.UserRegisterRespDto, error)
 
-	// Login 用户登录
-	// @Summary 用户登录
-	// @Description 根据用户名密码登录
-	// @Tags 用户模块
-	// @Accept json
-	// @Produce json
-	// @Param data body req.UserLoginReqDto true "登录信息"
-	// @Success 200 {object} resp.UserLoginRespDto
-	// @Failure 400 {string} string "错误信息"
-	// @Router /user/login [post]
 	Login(r *req.UserLoginReqDto) (*resp.UserLoginRespDto, error)
 }
 

@@ -9,22 +9,7 @@ import (
 
 // HomeService 首页服务接口
 type HomeService interface {
-	// ListHomeBooks 获取首页推荐小说列表
-	// @Summary 首页小说推荐查询接口
-	// @Description 获取首页推荐的小说列表
-	// @Tags 首页
-	// @Produce json
-	// @Success 200 {array} resp.HomeBookRespDto
-	// @Failure 500 {string} string "服务器错误"
 	ListHomeBooks(ctx context.Context) ([]resp.HomeBookRespDto, error)
-
-	// ListHomeFriendLinks 获取首页友情链接列表
-	// @Summary 首页友情链接列表查询接口
-	// @Description 获取首页展示的友情链接
-	// @Tags 首页
-	// @Produce json
-	// @Success 200 {array} resp.HomeFriendLinkRespDto
-	// @Failure 500 {string} string "服务器错误"
 	ListHomeFriendLinks(ctx context.Context) ([]resp.HomeFriendLinkRespDto, error)
 }
 

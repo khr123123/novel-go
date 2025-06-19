@@ -21,6 +21,7 @@ func main() {
 	} else {
 		log.Println("✅ Redis连接成功")
 	}
+	config.InitRedisLock()
 	//  2.  run the gin frame
 	r := gin.Default()
 	//  3.  cors config
@@ -37,7 +38,14 @@ func main() {
 	//  5. 3 Home Related APIs
 	homeController := controller.NewHomeController(service.NewHomeService()) //Dependency Inversion
 	homeController.RegisterRoutes(frontApiGroup)
-
+	//  5. 3 Home Related APIs
+	newsController := controller.NewNewsController(service.NewNewsService()) //Dependency Inversion
+	newsController.RegisterRoutes(frontApiGroup)
+	//  5. 3 Home Related APIs
+	bookController := controller.NewBookController(service.NewBookServiceImpl())
+	bookController.RegisterRoutes(frontApiGroup)
+	searchController := controller.NewSearchController(service.NewDBSearchServiceImpl())
+	searchController.RegisterRoutes(frontApiGroup)
 	_ = r.Run(":8888")
 
 }
