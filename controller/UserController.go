@@ -2,7 +2,10 @@ package controller
 
 import (
 	"novel-go/common"
+	"novel-go/config"
+	"novel-go/model/pojo"
 	"novel-go/model/req"
+	"novel-go/model/resp"
 	"novel-go/service"
 	"novel-go/utils"
 
@@ -30,6 +33,7 @@ func (uc *UserController) RegisterRoutes(rg *gin.RouterGroup) {
 		userGroup.POST("/register", uc.Register)
 		userGroup.POST("/login", uc.Login)
 		userGroup.POST("/comment", uc.Comment)
+		userGroup.GET("", uc.GetUserInfo)
 	}
 }
 
@@ -87,4 +91,21 @@ func (uc *UserController) Comment(c *gin.Context) {
 		return
 	}
 	common.SuccessResponse(c, nil)
+}
+
+func (uc *UserController) GetUserInfo(c *gin.Context) {
+	id, _ := utils.GetUserID(c.Request.Context())
+	var userinfo pojo.UserInfo
+	err := config.DB.WithContext(c).
+		Where("id = ?", id).
+		First(&userinfo).Error
+	if err != nil {
+		common.ErrorResponse(c, "4000", err.Error())
+		return
+	}
+	common.SuccessResponse(c, resp.UserInfoRespDto{
+		NickName:  userinfo.NickName,
+		UserPhoto: userinfo.UserPhoto,
+		UserSex:   userinfo.UserSex,
+	})
 }
