@@ -17,7 +17,6 @@ import (
 // UserService 用户服务接口
 type UserService interface {
 	Register(req *req.UserRegisterReqDto) (*resp.UserRegisterRespDto, error)
-
 	Login(r *req.UserLoginReqDto) (*resp.UserLoginRespDto, error)
 }
 
@@ -79,7 +78,7 @@ func (s *UserServiceImpl) Register(req *req.UserRegisterReqDto) (*resp.UserRegis
 
 	// 5. 构造返回信息
 	respDto := &resp.UserRegisterRespDto{
-		UID:      int64(user.ID),
+		UID:      user.ID,
 		NickName: user.NickName,
 		Avatar:   user.UserPhoto,
 	}

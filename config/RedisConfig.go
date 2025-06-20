@@ -29,7 +29,7 @@ func NewRedisPool() *cacheRedis.Pool {
 		IdleTimeout: 240 * time.Second, // 空闲连接最大存活时间
 		Dial: func() (cacheRedis.Conn, error) {
 			// 连接 Redis（端口、地址根据实际修改）
-			return cacheRedis.Dial("tcp", "localhost:6379")
+			return cacheRedis.Dial("tcp", "localhost:6379", cacheRedis.DialDatabase(0))
 		},
 		TestOnBorrow: func(c cacheRedis.Conn, t time.Time) error {
 			// 每次从连接池取出连接时做一次 PING 测试

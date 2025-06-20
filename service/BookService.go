@@ -348,7 +348,6 @@ func (b *BookServiceImpl) SaveComment(ctx context.Context, dto req.UserCommentRe
 	}
 	defer mutex.Unlock()
 
-	// 检查是否已评论（可选逻辑）
 	var count int64
 	if err := config.DB.WithContext(ctx).Model(&pojo.BookComment{}).
 		Where("user_id = ? AND book_id = ?", dto.UserId, dto.BookId).
@@ -359,11 +358,14 @@ func (b *BookServiceImpl) SaveComment(ctx context.Context, dto req.UserCommentRe
 		return fmt.Errorf("用户已评论，不能重复提交")
 	}
 
+	bid, _ := strconv.ParseInt(dto.BookId, 10, 64)
 	// 执行保存评论
 	comment := pojo.BookComment{
 		UserID:         dto.UserId,
-		BookID:         dto.BookId,
+		BookID:         bid,
 		CommentContent: dto.CommentContent,
+		CreateTime:     time.Now(),
+		UpdateTime:     time.Now(),
 	}
 	return config.DB.WithContext(ctx).Create(&comment).Error
 }

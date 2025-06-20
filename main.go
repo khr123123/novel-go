@@ -8,6 +8,7 @@ import (
 	"novel-go/config"
 	"novel-go/controller"
 	_ "novel-go/docs"
+	"novel-go/interceptor"
 	"novel-go/service"
 )
 
@@ -26,6 +27,8 @@ func main() {
 	r := gin.Default()
 	//  3.  cors config
 	r.Use(config.Cors())
+	r.Use(interceptor.UserInterceptor())
+
 	//  4. 1注册swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	//  5. 1 Resource Related APIs
@@ -33,7 +36,7 @@ func main() {
 	resourceController := controller.NewResourceController(service.NewResourceServiceImpl()) //Dependency Inversion
 	resourceController.RegisterRoutes(frontApiGroup)
 	//  5. 2 User Related APIs
-	userController := controller.NewUserController(service.NewUserServiceImpl()) //Dependency Inversion
+	userController := controller.NewUserController(service.NewUserServiceImpl(), service.NewBookServiceImpl()) //Dependency Inversion
 	userController.RegisterRoutes(frontApiGroup)
 	//  5. 3 Home Related APIs
 	homeController := controller.NewHomeController(service.NewHomeService()) //Dependency Inversion
@@ -46,6 +49,6 @@ func main() {
 	bookController.RegisterRoutes(frontApiGroup)
 	searchController := controller.NewSearchController(service.NewDBSearchServiceImpl())
 	searchController.RegisterRoutes(frontApiGroup)
-	_ = r.Run(":8888")
 
+	_ = r.Run(":8888")
 }

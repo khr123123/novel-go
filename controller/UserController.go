@@ -4,6 +4,7 @@ import (
 	"novel-go/common"
 	"novel-go/model/req"
 	"novel-go/service"
+	"novel-go/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,12 +12,14 @@ import (
 // UserController 用户控制器
 type UserController struct {
 	UserService service.UserService
+	BookService service.BookService
 }
 
 // NewUserController 创建UserController实例
-func NewUserController(userService service.UserService /**bookService *service.BookService**/) *UserController {
+func NewUserController(userService service.UserService, bookService service.BookService) *UserController {
 	return &UserController{
 		UserService: userService,
+		BookService: bookService,
 	}
 }
 
@@ -26,6 +29,7 @@ func (uc *UserController) RegisterRoutes(rg *gin.RouterGroup) {
 	{
 		userGroup.POST("/register", uc.Register)
 		userGroup.POST("/login", uc.Login)
+		userGroup.POST("/comment", uc.Comment)
 	}
 }
 
@@ -67,4 +71,20 @@ func (uc *UserController) Login(c *gin.Context) {
 		return
 	}
 	common.SuccessResponse(c, resp)
+}
+
+func (uc *UserController) Comment(c *gin.Context) {
+	id, _ := utils.GetUserID(c.Request.Context())
+	var commentReqDto req.UserCommentReqDto
+	if err := c.ShouldBindJSON(&commentReqDto); err != nil {
+		common.ErrorResponse(c, "4000", err.Error())
+		return
+	}
+	commentReqDto.UserId = id
+	err := uc.BookService.SaveComment(c, commentReqDto)
+	if err != nil {
+		common.ErrorResponse(c, "5000", err.Error())
+		return
+	}
+	common.SuccessResponse(c, nil)
 }
